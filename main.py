@@ -1,16 +1,47 @@
 import os
 os.environ["USER_AGENT"] = "promtior-bot"
 
-import argparse
-from langchain_community.document_loaders import WebBaseLoader
-from langchain_community.document_loaders import PyPDFLoader
+from fastapi import FastAPI
+from pydantic import BaseModel
+from langchain_community.document_loaders import WebBaseLoader, PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_ollama import OllamaLLM
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
-MODEL = "llama2"  # Modelo que usará Ollama
+MODEL = "llama2"  # Modelo usado en Ollama
+app = FastAPI() # Inicializar la aplicación FastAPI
+
+# Clase para manejar la entrada JSON
+class Query(BaseModel):
+    question: str
+
+# Cargar datos desde la web
+print("Cargando datos...")
+web_loader = WebBaseLoader("https://www.promtior.ai")   
+web_data = web_loader.load()    
+
+# Cargar datos desde el PDF
+pdf_loader = PyPDFLoader("AI Engineer.pdf")
+pdf_data = pdf_loader.load()    
+
+# Dividir datos en fragmentos manejables
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)  
+web_splits = text_splitter.split_documents(web_data)
+pdf_splits = text_splitter.split_documents(pdf_data)
+
+# Combinar todos los fragmentos
+all_splits = web_splits + pdf_splits    
+print(f"Total de fragmentos: {len(all_splits)}")
+
+# Crear el VectorStore con FAISS y GPT4AllEmbeddings
+embedding_model = GPT4AllEmbeddings()
+vectorstore = FAISS.from_documents(documents=all_splits, embedding=embedding_model)
+print("VectorStore creado con éxito.")
+
+# Configurar el modelo Llama2
+llm = OllamaLLM(model=MODEL)
+print(f"Modelo {MODEL} cargado.")
 
 def summarize_documents(llm, docs, question, max_words=200): # Resume los documentos recuperados utilizando el modelo de lenguaje, enfocado en la pregunta inicial.
     combined_text = " ".join([doc.page_content for doc in docs])
@@ -24,72 +55,20 @@ def summarize_documents(llm, docs, question, max_words=200): # Resume los docume
     summary = llm.invoke(summary_prompt)
     return summary
 
-def main():
-    # Configurar argumentos para la URL y el PDF
-    parser = argparse.ArgumentParser(description="Cargar datos desde la web y un PDF para preguntas con Llama 2.")
-    parser.add_argument(
-        "--url",
-        type=str,
-        default="https://www.promtior.ai",
-        required=False,
-        help="La URL para cargar datos."
-    )
-    parser.add_argument(
-        "--pdf",
-        type=str,
-        default="AI Engineer.pdf",
-        required=False,
-        help="Ruta al archivo PDF para cargar."
-    )
-
-    args = parser.parse_args()
-    url = args.url
-    pdf_path = args.pdf
-
-    print(f"Usando la URL: {url}")
-    print(f"Usando el archivo PDF: {pdf_path}")
-
-    # Cargar datos desde la web
-    web_loader = WebBaseLoader(url)
-    web_data = web_loader.load()
-
-    # Cargar datos desde el PDF
-    pdf_loader = PyPDFLoader(pdf_path)
-    pdf_data = pdf_loader.load()
-
-    # Dividir datos en fragmentos manejables
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)
-    web_splits = text_splitter.split_documents(web_data)
-    pdf_splits = text_splitter.split_documents(pdf_data)
-
-    # Combinar todos los fragmentos
-    all_splits = web_splits + pdf_splits
-    print(f"Total de fragmentos: {len(all_splits)}")
-
-    # Crear el VectorStore con FAISS y GPT4AllEmbeddings
-    embedding_model = GPT4AllEmbeddings()
-    vectorstore = FAISS.from_documents(documents=all_splits, embedding=embedding_model)
-    print("VectorStore creado con éxito.")
-
-    # Configurar el modelo Ollama con Llama 2
-    callbacks = [StreamingStdOutCallbackHandler()]
-    llm = OllamaLLM(model=MODEL, callbacks=callbacks)
-    print(f"Modelo {MODEL} cargado.")
-
-    # Interacción en tiempo real con el usuario
-    while True:
-        question = input("\nEscribe tu pregunta (o escribe 'salir' para terminar): ").strip()
-        if question.lower() == "salir":
-            print("Saliendo de la prueba técnica. ¡Adiós!")
-            break
-        
-        # Recuperar los documentos más relevantes
-        docs = vectorstore.similarity_search(question, k=5)
-        print(f"\nDocumentos recuperados: {len(docs)}")
-        
-        # Resumir los documentos recuperados
-        print("\nRespuesta generada: ")
-        summarize_documents(llm, docs, question, max_words=200)
+@app.post("/ask")
+async def ask_question(query: Query):
+    """
+    Endpoint para manejar preguntas de los usuarios.
+    """
+    question = query.question
+    docs = vectorstore.similarity_search(question, k=5)  # Recuperar k documentos
+    if len(docs) == 0:
+        return {"answer": "No se encontraron documentos relevantes para tu pregunta."}
+    
+    # Generar la respuesta
+    response = summarize_documents(llm, docs, question, max_words=200)
+    return {"answer": response}
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
