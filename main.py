@@ -5,7 +5,7 @@ import argparse
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_ollama import OllamaLLM
 from langchain.callbacks.manager import CallbackManager
