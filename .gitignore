@@ -1,0 +1,21 @@
+# Entornos virtuales
+env/
+.venv/
+
+# Archivos de Python
+*.pyc
+__pycache__/
+
+# Configuración específica
+*.log
+*.dll
+*.ini
+
+# Modelos descargados
+*.bin
+*.h5
+*.onnx
+
+# Configuración de IDEs
+.vscode/
+.idea/
