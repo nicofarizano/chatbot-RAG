@@ -8,7 +8,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_ollama import OllamaLLM
-from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 MODEL = "llama2"  # Modelo que usará Ollama
@@ -72,8 +71,8 @@ def main():
     print("VectorStore creado con éxito.")
 
     # Configurar el modelo Ollama con Llama 2
-    callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
-    llm = OllamaLLM(model=MODEL, callback_manager=callback_manager)
+    callbacks = [StreamingStdOutCallbackHandler()]
+    llm = OllamaLLM(model=MODEL, callbacks=callbacks)
     print(f"Modelo {MODEL} cargado.")
 
     # Interacción en tiempo real con el usuario
