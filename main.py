@@ -13,13 +13,13 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 MODEL = "llama2"  # Modelo que usará Ollama
 
-def summarize_documents(llm, docs, max_words=200):
-    """
-    Resume los documentos recuperados utilizando el modelo de lenguaje.
-    """
+def summarize_documents(llm, docs, question, max_words=200): # Resume los documentos recuperados utilizando el modelo de lenguaje, enfocado en la pregunta inicial.
     combined_text = " ".join([doc.page_content for doc in docs])
     summary_prompt = (
-        f"Resume el siguiente texto en no más de {max_words} palabras:\n\n{combined_text}"
+        f"A continuación, tienes un texto. Responde a la siguiente pregunta basándote en el texto. "
+        f"Limita tu respuesta a no más de {max_words} palabras.\n\n"
+        f"Pregunta: {question}\n\n"
+        f"Texto:\n{combined_text}"
     )
     summary = llm.invoke(summary_prompt)
     return summary
@@ -88,9 +88,8 @@ def main():
         print(f"\nDocumentos recuperados: {len(docs)}")
         
         # Resumir los documentos recuperados
-        summary = summarize_documents(llm, docs, max_words=150)
         print("\nRespuesta generada: ")
-        print(summary)
+        summarize_documents(llm, docs, question, max_words=200)
 
 if __name__ == "__main__":
     main()
