@@ -89,7 +89,7 @@ def main():
         
         # Resumir los documentos recuperados
         summary = summarize_documents(llm, docs, max_words=150)
-        print("\nRespuesta generada:")
+        print("\nRespuesta generada: ")
         print(summary)
 
 if __name__ == "__main__":
