@@ -16,6 +16,7 @@ def summarize_documents(llm, docs, question, max_words=200): # Resume los docume
     combined_text = " ".join([doc.page_content for doc in docs])
     summary_prompt = (
         f"A continuación, tienes un texto. Responde a la siguiente pregunta basándote en el texto. "
+        f"Prioriza información relevante y no incluyas contenido que no esté relacionado con la pregunta. "
         f"Limita tu respuesta a no más de {max_words} palabras.\n\n"
         f"Pregunta: {question}\n\n"
         f"Texto:\n{combined_text}"
@@ -83,7 +84,7 @@ def main():
             break
         
         # Recuperar los documentos más relevantes
-        docs = vectorstore.similarity_search(question, k=3)  # Recuperar 3 documentos
+        docs = vectorstore.similarity_search(question, k=5)
         print(f"\nDocumentos recuperados: {len(docs)}")
         
         # Resumir los documentos recuperados
