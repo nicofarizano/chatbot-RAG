@@ -4,12 +4,17 @@ env/
 
 # Archivos de Python
 *.pyc
+*.pyo
+*.pyd
 __pycache__/
 
-# Configuración específica
+# Archivos de log
 *.log
-*.dll
-*.ini
+*.out
+*.err
+
+# Archivos comprimidos
+*.zip
 
 # Modelos descargados
 *.bin
@@ -19,3 +24,11 @@ __pycache__/
 # Configuración de IDEs
 .vscode/
 .idea/
+
+# Configuración específica de despliegue
+.azure/
+.railway/
+
+# Ignorar DLLs o configuraciones específicas del sistema operativo
+*.dll
+*.ini
