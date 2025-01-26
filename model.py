@@ -64,7 +64,7 @@ class AIModel:
 
         try:
             response = self.llm.invoke(prompt)
-            return response.content
+            return response
         except Exception as e:
             logger.error(f"Error in LLM: {e}")
             return "An error occurred while processing your question."
