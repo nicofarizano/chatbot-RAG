@@ -1,21 +1,44 @@
 import os
-from fastapi import FastAPI
+import logging
+import uvicorn
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import GPT4AllEmbeddings
-from langchain_ollama import OllamaLLM
 from loaders import DocumentLoader
 from config import get_settings
-import logging
+from model import Query, ChatResponse, AIModel
+from contextlib import asynccontextmanager
 
 # Configuración de logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Inicializar FastAPI y configurar CORS
-app = FastAPI()
+# Inicializar componentes
+settings = get_settings()
+os.environ["USER_AGENT"] = settings.user_agent
+ai_model = AIModel()
+document_loader = DocumentLoader()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        documents = document_loader.load_all_documents()
+        ai_model.initialize_vectorstore(documents)
+        logger.info("System initialized successfully")
+    except Exception as e:
+        logger.error(f"Error during initialization: {e}")
+        raise
+    yield
+
+# Configurar FastAPI
+app = FastAPI(
+    title="Promtior Chatbot",
+    description="RAG chatbot API using Ollaama and LLaMA2",
+    version="2.0.0",
+    lifespan=lifespan,
+)
+
+# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,66 +47,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Cargar configuración
-settings = get_settings()
-
-# Clase para manejar la entrada JSON
-class Query(BaseModel):
-    question: str
-
-# Cargar documentos y crear VectorStore
-logger.info("Cargando documentos...")
-loader = DocumentLoader()
-all_docs = loader.load_all_documents()
-logger.info(f"Total de fragmentos: {len(all_docs)}")
-
-embedding_model = GPT4AllEmbeddings()
-vectorstore = FAISS.from_documents(documents=all_docs, embedding=embedding_model)
-logger.info("VectorStore creado con éxito.")
-
-# Configurar el modelo Ollama con Llama2
-llm = OllamaLLM(model=settings.model_name)
-logger.info(f"Modelo {settings.model_name} cargado.")
-
-# Función para resumir documentos recuperados basándose en una pregunta
-def summarize_documents(llm, docs, question, max_words=settings.max_words_response):
-    combined_text = " ".join([doc.page_content for doc in docs])
-    max_length = settings.max_context_length
-    if len(combined_text) > max_length:
-        combined_text = combined_text[:max_length]
-
-    summary_prompt = (
-        f"A continuación, tienes un texto. Responde a la siguiente pregunta basándote en el texto. "
-        f"Prioriza información relevante y no incluyas contenido que no esté relacionado con la pregunta. "
-        f"Limita tu respuesta a no más de {max_words} palabras.\n\n"
-        f"Pregunta: {question}\n\n"
-        f"Texto:\n{combined_text}"
-    )
-
-    try:
-        summary = llm.invoke(summary_prompt)
-    except Exception as e:
-        logger.error(f"Error en LLM: {e}")
-        return "Ocurrió un error procesando tu pregunta."
-
-    return summary
-
 # Ruta principal para cargar la interfaz web
 @app.get("/")
 def read_root():
-    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html"))
+    """Endpoint to serve the web interface"""
+    try:
+        return FileResponse("index.html")
+    except Exception as e:
+        logger.error(f"Error serving index.html file: {e}")
+        raise HTTPException(status_code=404, detail="File not found")
 
 # Ruta para manejar preguntas enviadas al chatbot
-@app.post("/ask")
-async def ask_question(query: Query):
-    question = query.question
-    docs = vectorstore.similarity_search(question, k=5)
-    if len(docs) == 0:
-        return {"answer": "No se encontraron documentos relevantes para tu pregunta."}
-    
-    response = summarize_documents(llm, docs, question)
-    return {"answer": response}
+@app.post("/ask", response_model=ChatResponse)
+async def ask_question(query: Query) -> ChatResponse:
+    """Endpoint to process user questions"""
+    try:
+        response = ai_model.generate_response(query.question)
+        return ChatResponse(answer=response)
+    except Exception as e:
+        logger.error(f"Error processing question: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=settings.port)
+    uvicorn.run(app, host="0.0.0.0", port=settings.port, reload=True)

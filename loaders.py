@@ -1,8 +1,8 @@
+import logging
 from langchain_community.document_loaders import WebBaseLoader, PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from typing import List
-import logging
 from config import get_settings
 
 logger = logging.getLogger(__name__)
