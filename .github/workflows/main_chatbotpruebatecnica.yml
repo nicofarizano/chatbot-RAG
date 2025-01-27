@@ -33,9 +33,9 @@ jobs:
       - name: Log in to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7A7359F88C4A4FDF9E33090B1DEA409C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_334325CA72BB4B48964EC837DAA7121C }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_96BE45A7E5A849ECAABCE1AC2802133E }}
 
       - name: Deploy to Azure Web App for Containers
         uses: azure/webapps-deploy@v3
