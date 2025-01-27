@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from langserve import add_routes
 from loaders import DocumentLoader
 from config import get_settings
 from model import Query, ChatResponse, AIModel
@@ -34,7 +35,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Promtior Chatbot",
     description="RAG chatbot API using Ollaama and LLaMA2",
-    version="2.0.0",
+    version="1.0",
     lifespan=lifespan,
 )
 
@@ -46,6 +47,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# AIModel con LangServe
+add_routes(app, ai_model, path="/invoke")
 
 # Ruta principal para cargar la interfaz web
 @app.get("/")

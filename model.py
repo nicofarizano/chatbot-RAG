@@ -5,6 +5,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_ollama import OllamaLLM
 from langchain.docstore.document import Document
+from langchain_core.runnables import Runnable
 from config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ class Query(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
 
-class AIModel:
+class AIModel(Runnable):
     def __init__(self):
         self.settings = get_settings()
         self.embedding_model = GPT4AllEmbeddings()
@@ -68,3 +69,7 @@ class AIModel:
         except Exception as e:
             logger.error(f"Error in LLM: {e}")
             return "An error occurred while processing your question."
+        
+    def invoke(self, input: dict) -> str:
+        question = input.get("question", "")
+        return self.generate_response(question)
