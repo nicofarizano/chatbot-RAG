@@ -20,7 +20,7 @@ class AIModel(Runnable):
     def __init__(self):
         self.settings = get_settings()
         self.embedding_model = GPT4AllEmbeddings()
-        self.llm = OllamaLLM(model=self.settings.model_name)
+        self.llm = OllamaLLM(base_url=self.settings.ollama_host, model=self.settings.model_name)
         self.vectorstore: FAISS | None = None
 
     def initialize_vectorstore(self, documents: List[Document]):

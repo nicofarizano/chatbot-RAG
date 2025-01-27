@@ -1,3 +1,4 @@
+import os
 from pydantic_settings import BaseSettings
 from typing import List
 from functools import lru_cache
@@ -9,7 +10,8 @@ class Settings(BaseSettings):
     chunk_overlap: int = 100
     max_words_response: int = 200
     max_context_length: int = 5000
-    port: int = 8000
+    port: int = 11435  
+    ollama_host: str = os.getenv("OLLAMA_HOST", "http://ollama:11434")
     urls: List[str] = [
         "https://www.promtior.ai",
         "https://www.promtior.ai/service",
