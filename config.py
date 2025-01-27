@@ -4,7 +4,7 @@ from typing import List
 from functools import lru_cache
 
 class Settings(BaseSettings):
-    user_agent: str = "promtior-bot"
+    user_agent: str = os.getenv("USER_AGENT", "promtior-bot")
     model_name: str = "llama2"
     chunk_size: int = 1500
     chunk_overlap: int = 100
@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     max_context_length: int = 5000
     port: int = 11435  
     ollama_host: str = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+    preload_model: bool = False
     urls: List[str] = [
         "https://www.promtior.ai",
         "https://www.promtior.ai/service",

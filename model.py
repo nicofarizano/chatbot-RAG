@@ -19,6 +19,8 @@ class ChatResponse(BaseModel):
 class AIModel(Runnable):
     def __init__(self):
         self.settings = get_settings()
+        if self.settings.preload_model:
+            raise ValueError("Model preloading is not required; ensure the model is preinstalled.")
         self.embedding_model = GPT4AllEmbeddings()
         self.llm = OllamaLLM(base_url=self.settings.ollama_host, model=self.settings.model_name)
         self.vectorstore: FAISS | None = None
@@ -54,16 +56,13 @@ class AIModel(Runnable):
         combined_text = " ".join([doc.page_content for doc in docs])
         if len(combined_text) > self.settings.max_context_length:
             combined_text = combined_text[: self.settings.max_context_length]
-
-        prompt = f"""Below, you have a text that may contain information relevant to your question. Please read it carefully and provide a concise answer to the user. Remember the following guidelines:\n\n
-            Always be friendly when the user greets you.
-            Prioritize relevant information and avoid unrelated content.
-            Respond only in English.
-            Limit your response to no more than {self.settings.max_words_response} words.\n\n
-            Question: {question}\n\n
-            Text:\n{combined_text}
-            """
-
+        prompt = f"""
+        You are a chatbot answering user questions based on the provided text. 
+        Be concise. Prioritize relevant information and do not include content that is not related to the question.
+        Question: {question}
+        Relevant Information: {combined_text}
+        Answer concisely in no more than {self.settings.max_words_response} words:
+        """
         try:
             response = self.llm.invoke(prompt)
             return response
