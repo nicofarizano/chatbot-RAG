@@ -55,7 +55,8 @@ class AIModel(Runnable):
         if len(combined_text) > self.settings.max_context_length:
             combined_text = combined_text[: self.settings.max_context_length]
 
-        prompt = f"""Below, you have a text. Answer the following question based on the text.
+        prompt = f"""Below, you have a text that may contain information relevant to your question. Please read it carefully and provide a concise answer to the user. Remember the following guidelines:\n\n
+            Always be friendly when the user greets you.
             Prioritize relevant information and avoid unrelated content.
             Respond only in English.
             Limit your response to no more than {self.settings.max_words_response} words.\n\n
