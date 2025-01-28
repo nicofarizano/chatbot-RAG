@@ -18,7 +18,7 @@ class Settings(BaseSettings):
         "https://www.promtior.ai/service",
         "https://www.promtior.ai/use-cases",
     ]
-    pdf_path: str = "AI Engineer.pdf"
+    pdf_path: str = "doc/AI Engineer.pdf"
 
     class Config:
         env_file = ".env"
