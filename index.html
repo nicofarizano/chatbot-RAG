@@ -60,9 +60,48 @@
     button:hover {
       background-color: #0056b3;
     }
+    .modal {
+      display: block;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .modal input {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
+
+  <div id="apiKeyModal" class="modal">
+    <div class="modal-content">
+      <h2>Enter OpenAI API Key (Optional)</h2>
+      <p>If you have an OpenAI API key, enter it below. Otherwise, click "Continue without OpenAI" to use Ollama and LLaMA2 instead.</p>
+      <input type="text" id="apiKeyInput" placeholder="Enter your OpenAI API key">
+      <br>
+      <button onclick="setApiKey()">Save API Key</button>
+      <button onclick="closeModal()">Continue without OpenAI</button>
+    </div>
+  </div>
+
   <div class="chat-container">
     <h2>Promtior Chatbot</h2>
     <div class="messages" id="messages"></div>
@@ -73,6 +112,20 @@
   </div>
 
   <script>
+    let apiKey = localStorage.getItem('openai_api_key') || '';
+
+    function setApiKey() {
+      apiKey = document.getElementById('apiKeyInput').value;
+      if (apiKey) {
+        localStorage.setItem('openai_api_key', apiKey);
+      }
+      closeModal();
+    }
+
+    function closeModal() {
+      document.getElementById('apiKeyModal').style.display = "none";
+    }
+
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('userInput');
 
@@ -94,8 +147,11 @@
       try {
         const response = await fetch('/ask', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question })
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': apiKey ? `Bearer ${apiKey}` : ''
+          },
+          body: JSON.stringify({ question, use_openai: !!apiKey })
         });
         const data = await response.json();
         addMessage(data.answer, 'bot');
