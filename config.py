@@ -12,7 +12,10 @@ class Settings(BaseSettings):
     max_context_length: int = 5000
     port: int = 11435  
     ollama_host: str = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+    ##ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
     preload_model: bool = False
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    use_openai: bool = os.getenv("USE_OPENAI", "").lower() in ["true", "1", "yes"]
     urls: List[str] = [
         "https://www.promtior.ai",
         "https://www.promtior.ai/service",
@@ -22,7 +25,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-
 
 @lru_cache()
 def get_settings() -> Settings:

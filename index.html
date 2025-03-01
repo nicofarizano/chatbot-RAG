@@ -149,9 +149,8 @@
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'Authorization': apiKey ? `Bearer ${apiKey}` : ''
           },
-          body: JSON.stringify({ question, use_openai: !!apiKey })
+          body: JSON.stringify({ question, openai_api_key: apiKey }) // Asegurar que la clave se envía correctamente
         });
         const data = await response.json();
         addMessage(data.answer, 'bot');
