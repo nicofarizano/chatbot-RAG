@@ -23,32 +23,31 @@ class AIModel(Runnable):
         self.settings = get_settings()
         self.embedding_model = GPT4AllEmbeddings()
         self.llm = OllamaLLM(base_url=self.settings.ollama_host, model=self.settings.model_name)
-        logger.info("Using Ollama with Llama2 for responses.")
         self.vectorstore: FAISS | None = None
 
     def initialize_vectorstore(self, documents: List[Document]):
         """Initializes the vector store with the provided documents"""
         try:
             self.vectorstore = FAISS.from_documents(documents=documents, embedding=self.embedding_model)
-            logger.info("VectorStore initialized successfully")
+            logger.info("✅ VectorStore initialized successfully")
         except Exception as e:
-            logger.error(f"Error initializing VectorStore: {e}")
+            logger.error(f"❌ Error initializing VectorStore: {e}")
             raise
 
     def generate_response(self, question: str, openai_api_key: Optional[str] = None) -> str:
         """Generates a response using OpenAI (if key is provided) or Ollama (default)."""
         if not self.vectorstore:
-            return "The system is not properly initialized."
+            return "⚠️  The system is not properly initialized."
 
         try:
             docs = self.vectorstore.similarity_search(question, k=5)
             if not docs:
-                return "No relevant documents were found for your question."
+                return "⚠️  No relevant documents were found for your question."
 
             return self._summarize_documents(docs, question, openai_api_key)
         except Exception as e:
-            logger.error(f"Error generating response: {e}")
-            return "An error occurred while processing your question."
+            logger.error(f"❌ Error generating response: {e}")
+            return "⚠️  An error occurred while processing your question."
 
     def _summarize_documents(self, docs: List[Document], question: str, openai_api_key: Optional[str] = None) -> str:
         """Summarizes the relevant documents to answer the question"""
@@ -66,14 +65,17 @@ class AIModel(Runnable):
 
         try:
             if openai_api_key and openai_api_key.strip():
-                openai_llm = ChatOpenAI(openai_api_key=openai_api_key, model_name="gpt-4")
-                logger.info("Using OpenAI for response generation.")
-                return openai_llm.invoke(prompt)
-            else:
-                return self.llm.invoke(prompt)
+                openai_llm = ChatOpenAI(api_key=openai_api_key, model_name="gpt-4")
+                logger.info("✅ Using OpenAI for response generation.")
+                response = openai_llm.invoke(prompt)
+                return str(response.content)
+
+            logger.info("⚠️  No OpenAI key provided. Using Ollama instead.")
+            return self.llm.invoke(prompt)
+        
         except Exception as e:
-            logger.error(f"Error in LLM: {e}")
-            return "An error occurred while processing your question."
+            logger.error(f"❌ OpenAI Error: {e}")
+            return "⚠️  Error: Could not connect to OpenAI. Please check your API Key or try again later."
         
     def invoke(self, input: dict) -> str:
         question = input.get("question", "")

@@ -98,7 +98,7 @@
       <input type="text" id="apiKeyInput" placeholder="Enter your OpenAI API key">
       <br>
       <button onclick="setApiKey()">Save API Key</button>
-      <button onclick="closeModal()">Continue without OpenAI</button>
+      <button onclick="disableOpenAI()">Continue without OpenAI</button>
     </div>
   </div>
 
@@ -113,18 +113,38 @@
 
   <script>
     let apiKey = localStorage.getItem('openai_api_key') || '';
+    let useOpenAI = localStorage.getItem('use_openai') !== 'false'; // Por defecto, OpenAI está habilitado
+
+    document.addEventListener("DOMContentLoaded", function() {
+      if (!apiKey && useOpenAI) {
+        document.getElementById('apiKeyModal').style.display = "block";
+      }
+    });
 
     function setApiKey() {
-      apiKey = document.getElementById('apiKeyInput').value;
+      apiKey = document.getElementById('apiKeyInput').value.trim();
       if (apiKey) {
         localStorage.setItem('openai_api_key', apiKey);
+        localStorage.setItem('use_openai', 'true'); // Se usará OpenAI
       }
+      closeModal();
+    }
+
+    function disableOpenAI() {
+      localStorage.setItem('use_openai', 'false'); // Deshabilita OpenAI, se usará Ollama
+      localStorage.removeItem('openai_api_key'); // Borra la clave si la había ingresado
       closeModal();
     }
 
     function closeModal() {
       document.getElementById('apiKeyModal').style.display = "none";
     }
+
+    document.getElementById('apiKeyInput').addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        setApiKey();
+      }
+    });
 
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('userInput');
@@ -138,20 +158,22 @@
     }
 
     async function sendMessage() {
-      const question = userInput.value;
+      const question = userInput.value.trim();
       if (!question) return;
 
       addMessage(question, 'user');
       userInput.value = '';
 
+      let useOpenAI = localStorage.getItem('use_openai') !== 'false';
+      let apiKey = useOpenAI ? localStorage.getItem('openai_api_key') : '';
+
       try {
         const response = await fetch('/ask', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ question, openai_api_key: apiKey }) // Asegurar que la clave se envía correctamente
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question, openai_api_key: apiKey })
         });
+
         const data = await response.json();
         addMessage(data.answer, 'bot');
       } catch (error) {

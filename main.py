@@ -66,10 +66,10 @@ def read_root():
 async def ask_question(query: Query) -> ChatResponse:
     """Endpoint to process user questions"""
     try:
-        response = ai_model.generate_response(query.question)
+        response = ai_model.generate_response(query.question, query.openai_api_key)
         return ChatResponse(answer=response)
     except Exception as e:
-        logger.error(f"Error processing question: {e}")
+        logger.error(f"❌ Error processing question: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
