@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     max_words_response: int = 200
     max_context_length: int = 5000
     port: int = 11435  
-    ##ollama_host: str = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-    ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    ollama_host: str = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+    ##ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
     preload_model: bool = False
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     use_openai: bool = os.getenv("USE_OPENAI", "").lower() in ["true", "1", "yes"]
