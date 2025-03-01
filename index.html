@@ -94,10 +94,13 @@
   <div id="apiKeyModal" class="modal">
     <div class="modal-content">
       <h2>Enter OpenAI API Key (Optional)</h2>
-      <p>If you have an OpenAI API key, enter it below. Otherwise, click "Continue without OpenAI" to use Ollama and LLaMA2 instead.</p>
+      <p>
+        If you have an OpenAI API key, enter it below. If not, you can use the default key provided.<br>
+        Otherwise, click "Continue without OpenAI" to use Ollama and LLaMA2 instead.
+      </p>
       <input type="text" id="apiKeyInput" placeholder="Enter your OpenAI API key">
       <br>
-      <button onclick="setApiKey()">Save API Key</button>
+      <button onclick="setApiKey()">Use default key provided or Save new API Key</button>
       <button onclick="disableOpenAI()">Continue without OpenAI</button>
     </div>
   </div>
@@ -112,11 +115,14 @@
   </div>
 
   <script>
-    let apiKey = localStorage.getItem('openai_api_key') || '';
-    let useOpenAI = localStorage.getItem('use_openai') !== 'false'; // Por defecto, OpenAI está habilitado
+    const defaultApiKey = "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";
+
+    let apiKey = localStorage.getItem('openai_api_key') || defaultApiKey;
+    let useOpenAI = localStorage.getItem('use_openai') !== 'false';
 
     document.addEventListener("DOMContentLoaded", function() {
-      if (!apiKey && useOpenAI) {
+      if (!localStorage.getItem('openai_api_key') && useOpenAI) {
+        document.getElementById('apiKeyInput').value = defaultApiKey;
         document.getElementById('apiKeyModal').style.display = "block";
       }
     });
@@ -125,14 +131,14 @@
       apiKey = document.getElementById('apiKeyInput').value.trim();
       if (apiKey) {
         localStorage.setItem('openai_api_key', apiKey);
-        localStorage.setItem('use_openai', 'true'); // Se usará OpenAI
+        localStorage.setItem('use_openai', 'true');
       }
       closeModal();
     }
 
     function disableOpenAI() {
-      localStorage.setItem('use_openai', 'false'); // Deshabilita OpenAI, se usará Ollama
-      localStorage.removeItem('openai_api_key'); // Borra la clave si la había ingresado
+      localStorage.setItem('use_openai', 'false');
+      localStorage.removeItem('openai_api_key');
       closeModal();
     }
 
